@@ -1,0 +1,47 @@
+# Misc
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+
+# IntelliJ / Android Studio
+*.iml
+.idea/
+
+# VS Code
+.vscode/
+
+# Flutter / Dart
+.dart_tool/
+.pub/
+build/
+coverage/
+.flutter-plugins-dependencies
+
+# Android
+android/.gradle/
+android/app/build/
+android/local.properties
+
+# iOS
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/.last_build_id
+
+# Desktop
+windows/flutter/ephemeral/
+linux/flutter/ephemeral/
+macos/Pods/
+
+# Docs
+**/doc/api/
+
+# Obfuscation / symbols
+app.*.symbols
+app.*.map.json
