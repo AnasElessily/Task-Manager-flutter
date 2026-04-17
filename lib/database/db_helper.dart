@@ -3,6 +3,7 @@ import 'package:path/path.dart';
 
 import '../models/user.dart';
 import '../models/task.dart';
+import '../utils/password_helper.dart';
 
 class DBHelper {
   static Database? _db;
@@ -18,7 +19,7 @@ class DBHelper {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: (db, version) async {
         // USERS TABLE
         await db.execute('''
@@ -47,6 +48,27 @@ class DBHelper {
           )
         ''');
       },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          final users = await db.query('users', columns: ['id', 'password']);
+
+          for (final user in users) {
+            final id = user['id'] as int?;
+            final password = user['password'] as String?;
+
+            if (id == null || password == null || PasswordHelper.isHashed(password)) {
+              continue;
+            }
+
+            await db.update(
+              'users',
+              {'password': PasswordHelper.hashPassword(password)},
+              where: 'id = ?',
+              whereArgs: [id],
+            );
+          }
+        }
+      },
     );
   }
 
@@ -54,7 +76,9 @@ class DBHelper {
 
   static Future<int> insertUser(User user) async {
     final db = await database;
-    return await db.insert('users', user.toMap());
+    final userMap = user.toMap();
+    userMap['password'] = PasswordHelper.normalizeForStorage(user.password);
+    return await db.insert('users', userMap);
   }
 
   static Future<User?> getUser(String email, String password) async {
@@ -74,7 +98,7 @@ class DBHelper {
     final user = User.fromMap(result.first);
 
     // 2. Wrong password case handled separately
-    if (user.password != password) {
+    if (!PasswordHelper.verifyPassword(password, user.password)) {
       throw Exception("wrong_password");
     }
 
@@ -94,10 +118,12 @@ class DBHelper {
 
   static Future<int> updateUser(User user) async {
     final db = await database;
+    final userMap = user.toMap();
+    userMap['password'] = PasswordHelper.normalizeForStorage(user.password);
 
     return await db.update(
       'users',
-      user.toMap(),
+      userMap,
       where: 'id = ?',
       whereArgs: [user.id],
     );
