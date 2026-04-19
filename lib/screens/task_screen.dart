@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../database/db_helper.dart';
 import '../models/task.dart';
 import '../models/user.dart';
+import '../utils/api_service.dart';
 
 class TaskScreen extends StatefulWidget {
   const TaskScreen({super.key, required this.user});
@@ -49,6 +50,38 @@ class _TaskScreenState extends State<TaskScreen> {
       _tasks = tasks;
       _isLoading = false;
     });
+
+    // Optional: Auto-sync local changes to remote
+    _syncTasks();
+  }
+
+  Future<void> _syncTasks() async {
+    try {
+      // 1. Fetch remote tasks and update local
+      final remoteTasks = await ApiService.fetchTasks(_currentUser.id!);
+      for (final task in remoteTasks) {
+        await DBHelper.insertTask(task);
+      }
+
+      // 2. Fetch local tasks and update remote
+      final localTasks = await DBHelper.getTasks(_currentUser.id!);
+      await ApiService.syncTasks(_currentUser.id!, localTasks);
+      
+      // Reload UI with synced data
+      final updatedTasks = await DBHelper.getTasks(_currentUser.id!);
+      updatedTasks.sort((a, b) {
+        final completedComparison = a.isCompleted.compareTo(b.isCompleted);
+        if (completedComparison != 0) return completedComparison;
+        return a.dueDate.compareTo(b.dueDate);
+      });
+      
+      if (!mounted) return;
+      setState(() {
+        _tasks = updatedTasks;
+      });
+    } catch (e) {
+      debugPrint("Sync failed: $e");
+    }
   }
 
   Future<void> _showTaskForm({Task? task}) async {

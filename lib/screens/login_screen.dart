@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../database/db_helper.dart';
+import '../models/user.dart';
+import '../utils/api_service.dart';
 import 'main_screen.dart'; 
 
 class LoginScreen extends StatefulWidget {
@@ -47,20 +49,33 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final user = await DBHelper.getUser(
+      // Remote Login
+      final apiResponse = await ApiService.login(
         emailController.text.trim().toLowerCase(),
         passwordController.text.trim(),
       );
 
-      if (!mounted) return;
-
-      if (user == null) {
+      if (apiResponse == null) {
         setState(() {
-          emailError = "Email does not exist";
+          emailError = "Invalid email or password";
           _isLoading = false;
         });
         return;
       }
+
+      final user = User.fromMap(apiResponse['user']);
+
+      // Initial Sync: Fetch tasks from remote
+      final remoteTasks = await ApiService.fetchTasks(user.id!);
+      for (final task in remoteTasks) {
+        await DBHelper.insertTask(task); // This handles insert or update if we use REPLACE
+      }
+
+      // Sync local tasks back to remote (if any)
+      final localTasks = await DBHelper.getTasks(user.id!);
+      await ApiService.syncTasks(user.id!, localTasks);
+
+      if (!mounted) return;
 
       Navigator.pushReplacement(
         context,

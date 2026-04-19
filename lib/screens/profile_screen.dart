@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../database/db_helper.dart';
 import '../models/user.dart';
+import '../utils/api_service.dart';
 import 'login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -97,6 +98,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         _profileImagePath = savedImage.path;
       });
+
+      // Upload to remote
+      await ApiService.uploadProfileImage(_currentUser.id!, savedImage);
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -162,6 +166,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
 
       await DBHelper.updateUser(updatedUser);
+
+      // Sync to remote
+      await ApiService.updateProfile(updatedUser);
 
       if (!mounted) return;
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../database/db_helper.dart';
 import '../models/user.dart';
+import '../utils/api_service.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -49,6 +50,10 @@ class _SignupScreenState extends State<SignupScreen> {
         password: passwordController.text.trim(),
       );
 
+      // Remote register
+      await ApiService.register(user);
+
+      // Local register
       await DBHelper.insertUser(user);
 
       if (!mounted) return;
