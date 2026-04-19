@@ -45,3 +45,11 @@ macos/Pods/
 # Obfuscation / symbols
 app.*.symbols
 app.*.map.json
+
+# Backend specific
+backend/node_modules/
+backend/database.db
+backend/uploads/
+backend/.env
+backend/*.log
+package-lock.json

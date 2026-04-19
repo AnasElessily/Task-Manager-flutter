@@ -99,13 +99,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _profileImagePath = savedImage.path;
       });
 
-      // Upload to remote
-      await ApiService.uploadProfileImage(_currentUser.id!, savedImage);
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not select image')),
+      // Upload to server
+      final remoteUrl = await ApiService.uploadProfileImage(
+        _currentUser.id!,
+        savedImage,
       );
+      if (remoteUrl != null) {
+        if (!mounted) return;
+        setState(() {
+          _profileImagePath = remoteUrl;
+        });
+
+        final updatedUser = User(
+          id: _currentUser.id,
+          fullName: _currentUser.fullName,
+          email: _currentUser.email,
+          studentId: _currentUser.studentId,
+          gender: _currentUser.gender,
+          level: _currentUser.level,
+          password: _currentUser.password,
+          profileImage: remoteUrl,
+        );
+        await DBHelper.updateUser(updatedUser);
+        _currentUser = updatedUser;
+      }
+    } catch (e) {
+      debugPrint("Error picking/uploading image: $e");
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Could not upload image')));
     }
   }
 
@@ -166,8 +189,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
 
       await DBHelper.updateUser(updatedUser);
-
-      // Sync to remote
       await ApiService.updateProfile(updatedUser);
 
       if (!mounted) return;
@@ -200,8 +221,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildProfileImage() {
-    final hasImage =
-        _profileImagePath != null && File(_profileImagePath!).existsSync();
+    ImageProvider? imageProvider;
+
+    if (_profileImagePath != null) {
+      if (_profileImagePath!.startsWith('/uploads')) {
+        imageProvider = NetworkImage('${ApiService.rootUrl}$_profileImagePath');
+      } else if (File(_profileImagePath!).existsSync()) {
+        imageProvider = FileImage(File(_profileImagePath!));
+      }
+    }
 
     return Center(
       child: Stack(
@@ -209,7 +237,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Container(
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: Theme.of(context).colorScheme.primary, width: 3),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.primary,
+                width: 3,
+              ),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withAlpha(25),
@@ -221,10 +252,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: CircleAvatar(
               radius: 60,
               backgroundColor: Colors.white,
-              backgroundImage: hasImage ? FileImage(File(_profileImagePath!)) : null,
-              child: hasImage
-                  ? null
-                  : Icon(Icons.person, size: 60, color: Colors.grey.shade400),
+              backgroundImage: imageProvider,
+              child: imageProvider == null
+                  ? Icon(Icons.person, size: 60, color: Colors.grey.shade400)
+                  : null,
             ),
           ),
           if (_isEditMode)
@@ -239,7 +270,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   padding: const EdgeInsets.all(8),
                   constraints: const BoxConstraints(),
                   onPressed: _showImageSourceSheet,
-                  icon: const Icon(Icons.camera_alt, size: 20, color: Colors.white),
+                  icon: const Icon(
+                    Icons.camera_alt,
+                    size: 20,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),
@@ -264,7 +299,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         const SizedBox(height: 32),
         Card(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           child: Column(
             children: [
               ListTile(
@@ -274,10 +311,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     color: Theme.of(context).colorScheme.primary.withAlpha(25),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.badge_outlined, color: Theme.of(context).colorScheme.primary),
+                  child: Icon(
+                    Icons.badge_outlined,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
                 ),
-                title: const Text('Student ID', style: TextStyle(color: Colors.grey, fontSize: 13)),
-                subtitle: Text(_currentUser.studentId, style: const TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.w500)),
+                title: const Text(
+                  'Student ID',
+                  style: TextStyle(color: Colors.grey, fontSize: 13),
+                ),
+                subtitle: Text(
+                  _currentUser.studentId,
+                  style: const TextStyle(
+                    color: Colors.black87,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
               const Divider(height: 1, indent: 64),
               ListTile(
@@ -287,10 +337,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     color: Theme.of(context).colorScheme.primary.withAlpha(25),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.people_outline, color: Theme.of(context).colorScheme.primary),
+                  child: Icon(
+                    Icons.people_outline,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
                 ),
-                title: const Text('Gender', style: TextStyle(color: Colors.grey, fontSize: 13)),
-                subtitle: Text(_currentUser.gender ?? 'Not specified', style: const TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.w500)),
+                title: const Text(
+                  'Gender',
+                  style: TextStyle(color: Colors.grey, fontSize: 13),
+                ),
+                subtitle: Text(
+                  _currentUser.gender ?? 'Not specified',
+                  style: const TextStyle(
+                    color: Colors.black87,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
               const Divider(height: 1, indent: 64),
               ListTile(
@@ -300,10 +363,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     color: Theme.of(context).colorScheme.primary.withAlpha(25),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.school_outlined, color: Theme.of(context).colorScheme.primary),
+                  child: Icon(
+                    Icons.school_outlined,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
                 ),
-                title: const Text('Academic Level', style: TextStyle(color: Colors.grey, fontSize: 13)),
-                subtitle: Text(_currentUser.level != null ? 'Level ${_currentUser.level}' : 'Not specified', style: const TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.w500)),
+                title: const Text(
+                  'Academic Level',
+                  style: TextStyle(color: Colors.grey, fontSize: 13),
+                ),
+                subtitle: Text(
+                  _currentUser.level != null
+                      ? 'Level ${_currentUser.level}'
+                      : 'Not specified',
+                  style: const TextStyle(
+                    color: Colors.black87,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
             ],
           ),
@@ -317,8 +395,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             icon: const Icon(Icons.edit),
             label: const Text('Edit Profile', style: TextStyle(fontSize: 18)),
             style: OutlinedButton.styleFrom(
-              side: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              side: BorderSide(
+                color: Theme.of(context).colorScheme.primary,
+                width: 2,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
             ),
           ),
         ),
@@ -333,7 +416,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           _buildProfileImage(),
           const SizedBox(height: 32),
-          
+
           TextFormField(
             controller: _nameController,
             decoration: const InputDecoration(
@@ -348,7 +431,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             },
           ),
           const SizedBox(height: 16),
-          
+
           InputDecorator(
             decoration: const InputDecoration(
               labelText: 'Gender',
@@ -378,7 +461,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          
+
           TextFormField(
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
@@ -387,15 +470,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
               prefixIcon: Icon(Icons.email_outlined),
             ),
             validator: (value) {
-              if (value == null || value.trim().isEmpty) return 'Email is required';
-              if (!RegExp(r'^\d+@stud\.fci-cu\.edu\.eg$').hasMatch(value.trim())) {
+              if (value == null || value.trim().isEmpty)
+                return 'Email is required';
+              if (!RegExp(
+                r'^\d+@stud\.fci-cu\.edu\.eg$',
+              ).hasMatch(value.trim())) {
                 return 'Invalid FCI email format';
               }
               return null;
             },
           ),
           const SizedBox(height: 16),
-          
+
           TextFormField(
             controller: _studentIdController,
             keyboardType: TextInputType.number,
@@ -404,14 +490,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
               prefixIcon: Icon(Icons.badge_outlined),
             ),
             validator: (value) {
-              if (value == null || value.trim().isEmpty) return 'Student ID is required';
+              if (value == null || value.trim().isEmpty)
+                return 'Student ID is required';
               final emailId = _emailController.text.trim().split('@').first;
-              if (emailId != value.trim()) return 'Student ID must match email ID';
+              if (emailId != value.trim())
+                return 'Student ID must match email ID';
               return null;
             },
           ),
           const SizedBox(height: 16),
-          
+
           DropdownButtonFormField<String>(
             initialValue: _level,
             decoration: const InputDecoration(
@@ -419,12 +507,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
               prefixIcon: Icon(Icons.school_outlined),
             ),
             items: const ['1', '2', '3', '4']
-                .map((level) => DropdownMenuItem(value: level, child: Text("Level $level")))
+                .map(
+                  (level) => DropdownMenuItem(
+                    value: level,
+                    child: Text("Level $level"),
+                  ),
+                )
                 .toList(),
             onChanged: (value) => setState(() => _level = value),
           ),
           const SizedBox(height: 32),
-          
+
           Row(
             children: [
               Expanded(
@@ -442,11 +535,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   height: 56,
                   child: ElevatedButton(
                     onPressed: _isSaving ? null : _saveProfile,
-                    child: _isSaving 
+                    child: _isSaving
                         ? const SizedBox(
-                            height: 24, 
-                            width: 24, 
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3)
+                            height: 24,
+                            width: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 3,
+                            ),
                           )
                         : const Text('Save', style: TextStyle(fontSize: 18)),
                   ),

@@ -5,8 +5,14 @@ import '../models/user.dart';
 import '../models/task.dart';
 
 class ApiService {
-  // Use your computer's local IP address
-  static const String baseUrl = 'http://192.168.1.11:3000/api';
+  static String get rootUrl {
+    if (Platform.isAndroid) {
+      return 'http://10.0.2.2:3000'; // Special address for Android emulators
+    }
+    return 'http://localhost:3000'; // Normal address for everything else
+  }
+
+  static String get baseUrl => '$rootUrl/api';
 
   static Future<Map<String, dynamic>> register(User user) async {
     final response = await http.post(
@@ -14,10 +20,18 @@ class ApiService {
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(user.toMap()),
     );
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Could not create account. Maybe that email is already used?',
+      );
+    }
     return jsonDecode(response.body);
   }
 
-  static Future<Map<String, dynamic>?> login(String email, String password) async {
+  static Future<Map<String, dynamic>> login(
+    String email,
+    String password,
+  ) async {
     final response = await http.post(
       Uri.parse('$baseUrl/login'),
       headers: {'Content-Type': 'application/json'},
@@ -26,25 +40,27 @@ class ApiService {
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
+    } else {
+      final errorData = jsonDecode(response.body);
+      throw Exception(errorData['error'] ?? 'login_failed');
     }
-    return null;
   }
 
   static Future<bool> syncTasks(int userId, List<Task> tasks) async {
-    final List<Map<String, dynamic>> tasksMap = tasks.map((t) => t.toMap()).toList();
-    
+    final List<Map<String, dynamic>> tasksMap = tasks
+        .map((t) => t.toMap())
+        .toList();
+
     final response = await http.post(
       Uri.parse('$baseUrl/tasks/sync'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'userId': userId,
-        'tasks': tasksMap,
-      }),
+      body: jsonEncode({'userId': userId, 'tasks': tasksMap}),
     );
 
     return response.statusCode == 200;
   }
 
+  // Requests a list of all tasks for a specific user from the server
   static Future<List<Task>> fetchTasks(int userId) async {
     final response = await http.get(Uri.parse('$baseUrl/tasks/$userId'));
 
@@ -64,10 +80,21 @@ class ApiService {
     return response.statusCode == 200;
   }
 
+  static Future<bool> deleteTask(String id) async {
+    final response = await http.delete(Uri.parse('$baseUrl/tasks/$id'));
+    return response.statusCode == 200;
+  }
+
   static Future<String?> uploadProfileImage(int userId, File imageFile) async {
-    var request = http.MultipartRequest('POST', Uri.parse('$baseUrl/profile/image'));
+    var request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$baseUrl/profile/image'),
+    );
+
     request.fields['userId'] = userId.toString();
-    request.files.add(await http.MultipartFile.fromPath('image', imageFile.path));
+    request.files.add(
+      await http.MultipartFile.fromPath('image', imageFile.path),
+    );
 
     var streamedResponse = await request.send();
     var response = await http.Response.fromStream(streamedResponse);

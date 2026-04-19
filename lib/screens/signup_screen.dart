@@ -51,24 +51,25 @@ class _SignupScreenState extends State<SignupScreen> {
       );
 
       // Remote register
-      await ApiService.register(user);
+      final response = await ApiService.register(user);
+      user.id = response['id'];
 
       // Local register
       await DBHelper.insertUser(user);
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Signup Success")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Signup Success")));
 
       Navigator.pushReplacementNamed(context, '/login');
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Email already exists")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Email already exists")));
     }
   }
 
@@ -84,7 +85,10 @@ class _SignupScreenState extends State<SignupScreen> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 16.0,
+            ),
             child: Form(
               key: _formKey,
               child: Column(
@@ -101,13 +105,10 @@ class _SignupScreenState extends State<SignupScreen> {
                   const SizedBox(height: 8),
                   Text(
                     "Sign up to start managing your tasks",
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey.shade600,
-                    ),
+                    style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
                   ),
                   const SizedBox(height: 32),
-                  
+
                   TextFormField(
                     controller: nameController,
                     decoration: const InputDecoration(
@@ -115,12 +116,13 @@ class _SignupScreenState extends State<SignupScreen> {
                       prefixIcon: Icon(Icons.person_outline),
                     ),
                     validator: (value) {
-                      if (value == null || value.trim().isEmpty) return "Full Name is required";
+                      if (value == null || value.trim().isEmpty)
+                        return "Full Name is required";
                       return null;
                     },
                   ),
                   const SizedBox(height: 16),
-                  
+
                   TextFormField(
                     controller: emailController,
                     keyboardType: TextInputType.emailAddress,
@@ -129,8 +131,11 @@ class _SignupScreenState extends State<SignupScreen> {
                       prefixIcon: Icon(Icons.email_outlined),
                     ),
                     validator: (value) {
-                      if (value == null || value.trim().isEmpty) return "Email is required";
-                      if (!RegExp(r'^\d+@stud\.fci-cu\.edu\.eg$').hasMatch(value.trim())) {
+                      if (value == null || value.trim().isEmpty)
+                        return "Email is required";
+                      if (!RegExp(
+                        r'^\d+@stud\.fci-cu\.edu\.eg$',
+                      ).hasMatch(value.trim())) {
                         return "Invalid FCI email format";
                       }
                       return null;
@@ -146,10 +151,12 @@ class _SignupScreenState extends State<SignupScreen> {
                       prefixIcon: Icon(Icons.badge_outlined),
                     ),
                     validator: (value) {
-                      if (value == null || value.trim().isEmpty) return "Student ID is required";
+                      if (value == null || value.trim().isEmpty)
+                        return "Student ID is required";
                       final email = emailController.text.trim();
                       final emailId = email.split("@").first;
-                      if (emailId != value.trim()) return "Student ID must match email ID";
+                      if (emailId != value.trim())
+                        return "Student ID must match email ID";
                       return null;
                     },
                   ),
@@ -161,12 +168,18 @@ class _SignupScreenState extends State<SignupScreen> {
                       prefixIcon: Icon(Icons.school_outlined),
                     ),
                     value: level,
-                    items: ["1", "2", "3", "4"].map((lvl) => DropdownMenuItem(value: lvl, child: Text("Level $lvl"))).toList(),
+                    items: ["1", "2", "3", "4"]
+                        .map(
+                          (lvl) => DropdownMenuItem(
+                            value: lvl,
+                            child: Text("Level $lvl"),
+                          ),
+                        )
+                        .toList(),
                     onChanged: (value) => setState(() => level = value),
-                    validator: (value) => value == null ? "Academic level is required" : null,
                   ),
                   const SizedBox(height: 16),
-                  
+
                   InputDecorator(
                     decoration: const InputDecoration(
                       labelText: "Gender",
@@ -174,20 +187,26 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                     child: Row(
                       children: [
-                        Expanded(child: RadioListTile<String>(
-                          title: const Text("Male"),
-                          value: "Male",
-                          groupValue: gender,
-                          onChanged: (value) => setState(() => gender = value),
-                          contentPadding: EdgeInsets.zero,
-                        )),
-                        Expanded(child: RadioListTile<String>(
-                          title: const Text("Female"),
-                          value: "Female",
-                          groupValue: gender,
-                          onChanged: (value) => setState(() => gender = value),
-                          contentPadding: EdgeInsets.zero,
-                        )),
+                        Expanded(
+                          child: RadioListTile<String>(
+                            title: const Text("Male"),
+                            value: "Male",
+                            groupValue: gender,
+                            onChanged: (value) =>
+                                setState(() => gender = value),
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                        ),
+                        Expanded(
+                          child: RadioListTile<String>(
+                            title: const Text("Female"),
+                            value: "Female",
+                            groupValue: gender,
+                            onChanged: (value) =>
+                                setState(() => gender = value),
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -200,14 +219,22 @@ class _SignupScreenState extends State<SignupScreen> {
                       labelText: "Password",
                       prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
-                        icon: Icon(obscurePassword ? Icons.visibility_off : Icons.visibility),
-                        onPressed: () => setState(() => obscurePassword = !obscurePassword),
+                        icon: Icon(
+                          obscurePassword
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                        ),
+                        onPressed: () =>
+                            setState(() => obscurePassword = !obscurePassword),
                       ),
                     ),
                     validator: (value) {
-                      if (value == null || value.isEmpty) return "Password is required";
-                      if (value.length < 8) return "Password must be at least 8 characters";
-                      if (!RegExp(r'\d').hasMatch(value)) return "Password must contain a number";
+                      if (value == null || value.isEmpty)
+                        return "Password is required";
+                      if (value.length < 8)
+                        return "Password must be at least 8 characters";
+                      if (!RegExp(r'\d').hasMatch(value))
+                        return "Password must contain a number";
                       return null;
                     },
                   ),
@@ -220,13 +247,22 @@ class _SignupScreenState extends State<SignupScreen> {
                       labelText: "Confirm Password",
                       prefixIcon: const Icon(Icons.lock_reset),
                       suffixIcon: IconButton(
-                        icon: Icon(obscureConfirmPassword ? Icons.visibility_off : Icons.visibility),
-                        onPressed: () => setState(() => obscureConfirmPassword = !obscureConfirmPassword),
+                        icon: Icon(
+                          obscureConfirmPassword
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                        ),
+                        onPressed: () => setState(
+                          () =>
+                              obscureConfirmPassword = !obscureConfirmPassword,
+                        ),
                       ),
                     ),
                     validator: (value) {
-                      if (value == null || value.isEmpty) return "Confirm Password is required";
-                      if (value != passwordController.text) return "Passwords do not match";
+                      if (value == null || value.isEmpty)
+                        return "Confirm Password is required";
+                      if (value != passwordController.text)
+                        return "Passwords do not match";
                       return null;
                     },
                   ),
@@ -236,13 +272,19 @@ class _SignupScreenState extends State<SignupScreen> {
                     height: 56,
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _signup,
-                      child: _isLoading 
+                      child: _isLoading
                           ? const SizedBox(
-                              height: 24, 
-                              width: 24, 
-                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3)
-                            ) 
-                          : const Text("Sign Up", style: TextStyle(fontSize: 18)),
+                              height: 24,
+                              width: 24,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 3,
+                              ),
+                            )
+                          : const Text(
+                              "Sign Up",
+                              style: TextStyle(fontSize: 18),
+                            ),
                     ),
                   ),
                   const SizedBox(height: 24),

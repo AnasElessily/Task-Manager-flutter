@@ -4,6 +4,7 @@ import '../database/db_helper.dart';
 import '../models/task.dart';
 import '../models/user.dart';
 import '../utils/api_service.dart';
+import 'package:uuid/uuid.dart';
 
 class TaskScreen extends StatefulWidget {
   const TaskScreen({super.key, required this.user});
@@ -17,7 +18,7 @@ class TaskScreen extends StatefulWidget {
 class _TaskScreenState extends State<TaskScreen> {
   bool _isLoading = true;
   List<Task> _tasks = [];
-  
+
   User get _currentUser => widget.user;
 
   String _formatDate(DateTime date) {
@@ -51,30 +52,26 @@ class _TaskScreenState extends State<TaskScreen> {
       _isLoading = false;
     });
 
-    // Optional: Auto-sync local changes to remote
     _syncTasks();
   }
 
   Future<void> _syncTasks() async {
     try {
-      // 1. Fetch remote tasks and update local
-      final remoteTasks = await ApiService.fetchTasks(_currentUser.id!);
-      for (final task in remoteTasks) {
-        await DBHelper.insertTask(task);
-      }
-
-      // 2. Fetch local tasks and update remote
       final localTasks = await DBHelper.getTasks(_currentUser.id!);
       await ApiService.syncTasks(_currentUser.id!, localTasks);
-      
-      // Reload UI with synced data
+
+      final remoteTasks = await ApiService.fetchTasks(_currentUser.id!);
+
+      for (final remoteTask in remoteTasks) {
+        await DBHelper.insertTask(remoteTask);
+      }
       final updatedTasks = await DBHelper.getTasks(_currentUser.id!);
       updatedTasks.sort((a, b) {
         final completedComparison = a.isCompleted.compareTo(b.isCompleted);
         if (completedComparison != 0) return completedComparison;
         return a.dueDate.compareTo(b.dueDate);
       });
-      
+
       if (!mounted) return;
       setState(() {
         _tasks = updatedTasks;
@@ -137,10 +134,11 @@ class _TaskScreenState extends State<TaskScreen> {
                     children: [
                       Text(
                         task == null ? 'Add New Task' : 'Edit Task',
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
                       ),
                       const SizedBox(height: 24),
                       TextFormField(
@@ -234,10 +232,11 @@ class _TaskScreenState extends State<TaskScreen> {
                             }
 
                             final newTask = Task(
-                              id: task?.id,
+                              id: task?.id ?? const Uuid().v4(),
                               userId: _currentUser.id!,
                               title: titleController.text.trim(),
-                              description: descriptionController.text.trim().isEmpty
+                              description:
+                                  descriptionController.text.trim().isEmpty
                                   ? null
                                   : descriptionController.text.trim(),
                               dueDate: _formatDate(selectedDate!),
@@ -290,7 +289,9 @@ class _TaskScreenState extends State<TaskScreen> {
         return AlertDialog(
           title: const Text('Delete Task'),
           content: Text('Are you sure you want to delete "${task.title}"?'),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -307,6 +308,12 @@ class _TaskScreenState extends State<TaskScreen> {
     );
 
     if (shouldDelete != true) return;
+
+    try {
+      await ApiService.deleteTask(task.id!);
+    } catch (e) {
+      debugPrint("Remote delete failed: $e");
+    }
 
     await DBHelper.deleteTask(task.id!);
     await _loadTasks();
@@ -361,7 +368,10 @@ class _TaskScreenState extends State<TaskScreen> {
                 children: [
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 20,
+                    ),
                     decoration: BoxDecoration(
                       color: Theme.of(context).colorScheme.primary,
                       borderRadius: const BorderRadius.only(
@@ -374,10 +384,11 @@ class _TaskScreenState extends State<TaskScreen> {
                       children: [
                         Text(
                           'Hello, ${_currentUser.fullName.split(' ').first}',
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
                         ),
                         const SizedBox(height: 8),
                         Text(
@@ -396,23 +407,37 @@ class _TaskScreenState extends State<TaskScreen> {
                             padding: const EdgeInsets.all(24),
                             children: [
                               const SizedBox(height: 100),
-                              Icon(Icons.assignment_turned_in_outlined, size: 100, color: Colors.grey.shade400),
+                              Icon(
+                                Icons.assignment_turned_in_outlined,
+                                size: 100,
+                                color: Colors.grey.shade400,
+                              ),
                               const SizedBox(height: 24),
                               Text(
                                 'No tasks yet',
                                 textAlign: TextAlign.center,
-                                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.grey.shade700),
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey.shade700,
+                                ),
                               ),
                               const SizedBox(height: 8),
                               Text(
                                 'Tap the + button to add your first task.',
                                 textAlign: TextAlign.center,
-                                style: TextStyle(fontSize: 16, color: Colors.grey.shade500),
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey.shade500,
+                                ),
                               ),
                             ],
                           )
                         : ListView.builder(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
                             itemCount: _tasks.length,
                             itemBuilder: (context, index) {
                               final task = _tasks[index];
@@ -421,10 +446,14 @@ class _TaskScreenState extends State<TaskScreen> {
                               return Card(
                                 margin: const EdgeInsets.only(bottom: 12),
                                 elevation: isCompleted ? 0 : 2,
-                                color: isCompleted ? Colors.grey.shade100 : Colors.white,
+                                color: isCompleted
+                                    ? Colors.grey.shade100
+                                    : Colors.white,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
-                                  side: isCompleted ? BorderSide(color: Colors.grey.shade300) : BorderSide.none,
+                                  side: isCompleted
+                                      ? BorderSide(color: Colors.grey.shade300)
+                                      : BorderSide.none,
                                 ),
                                 child: Padding(
                                   padding: const EdgeInsets.all(8.0),
@@ -437,8 +466,13 @@ class _TaskScreenState extends State<TaskScreen> {
                                       scale: 1.2,
                                       child: Checkbox(
                                         value: isCompleted,
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                                        onChanged: (value) => _toggleTaskStatus(task, value),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
+                                        ),
+                                        onChanged: (value) =>
+                                            _toggleTaskStatus(task, value),
                                       ),
                                     ),
                                     title: Text(
@@ -446,42 +480,75 @@ class _TaskScreenState extends State<TaskScreen> {
                                       style: TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.w600,
-                                        color: isCompleted ? Colors.grey : Colors.black87,
-                                        decoration: isCompleted ? TextDecoration.lineThrough : null,
+                                        color: isCompleted
+                                            ? Colors.grey
+                                            : Colors.black87,
+                                        decoration: isCompleted
+                                            ? TextDecoration.lineThrough
+                                            : null,
                                       ),
                                     ),
                                     subtitle: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         const SizedBox(height: 8),
-                                        if (task.description != null && task.description!.isNotEmpty)
+                                        if (task.description != null &&
+                                            task.description!.isNotEmpty)
                                           Padding(
-                                            padding: const EdgeInsets.only(bottom: 8),
+                                            padding: const EdgeInsets.only(
+                                              bottom: 8,
+                                            ),
                                             child: Text(
                                               task.description!,
-                                              style: TextStyle(color: Colors.grey.shade600),
+                                              style: TextStyle(
+                                                color: Colors.grey.shade600,
+                                              ),
                                             ),
                                           ),
                                         Row(
                                           children: [
-                                            Icon(Icons.calendar_today, size: 14, color: Colors.grey.shade500),
+                                            Icon(
+                                              Icons.calendar_today,
+                                              size: 14,
+                                              color: Colors.grey.shade500,
+                                            ),
                                             const SizedBox(width: 4),
                                             Text(
                                               task.dueDate,
-                                              style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                                              style: TextStyle(
+                                                color: Colors.grey.shade600,
+                                                fontSize: 13,
+                                              ),
                                             ),
                                             const Spacer(),
                                             Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 4,
+                                                  ),
                                               decoration: BoxDecoration(
-                                                color: _priorityColor(task.priority, context).withAlpha(46),
-                                                borderRadius: BorderRadius.circular(12),
-                                                border: Border.all(color: _priorityColor(task.priority, context)),
+                                                color: _priorityColor(
+                                                  task.priority,
+                                                  context,
+                                                ).withAlpha(46),
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                                border: Border.all(
+                                                  color: _priorityColor(
+                                                    task.priority,
+                                                    context,
+                                                  ),
+                                                ),
                                               ),
                                               child: Text(
                                                 task.priority,
                                                 style: TextStyle(
-                                                  color: _priorityColor(task.priority, context),
+                                                  color: _priorityColor(
+                                                    task.priority,
+                                                    context,
+                                                  ),
                                                   fontSize: 12,
                                                   fontWeight: FontWeight.bold,
                                                 ),
@@ -500,13 +567,18 @@ class _TaskScreenState extends State<TaskScreen> {
                                           _deleteTask(task);
                                         }
                                       },
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
                                       itemBuilder: (context) => const [
                                         PopupMenuItem(
                                           value: 'edit',
                                           child: Row(
                                             children: [
-                                              Icon(Icons.edit_outlined, size: 20),
+                                              Icon(
+                                                Icons.edit_outlined,
+                                                size: 20,
+                                              ),
                                               SizedBox(width: 8),
                                               Text('Edit'),
                                             ],
@@ -516,9 +588,18 @@ class _TaskScreenState extends State<TaskScreen> {
                                           value: 'delete',
                                           child: Row(
                                             children: [
-                                              Icon(Icons.delete_outline, color: Colors.red, size: 20),
+                                              Icon(
+                                                Icons.delete_outline,
+                                                color: Colors.red,
+                                                size: 20,
+                                              ),
                                               SizedBox(width: 8),
-                                              Text('Delete', style: TextStyle(color: Colors.red)),
+                                              Text(
+                                                'Delete',
+                                                style: TextStyle(
+                                                  color: Colors.red,
+                                                ),
+                                              ),
                                             ],
                                           ),
                                         ),

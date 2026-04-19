@@ -15,11 +15,41 @@ class DBHelper {
   }
 
   static Future<Database> initDB() async {
-    String path = join(await getDatabasesPath(), 'app.db');
+    String path = join(await getDatabasesPath(), 'app_v2.db');
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 3,
+      onUpgrade: (db, oldVersion, newVersion) async {
+        await db.execute('DROP TABLE IF EXISTS tasks');
+        await db.execute('DROP TABLE IF EXISTS users');
+        // Users Table
+        await db.execute('''
+          CREATE TABLE users(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            fullName TEXT,
+            email TEXT UNIQUE,
+            studentId TEXT,
+            gender TEXT,
+            level INTEGER,
+            password TEXT,
+            profileImage TEXT
+          )
+        ''');
+
+        // Tasks Table
+        await db.execute('''
+          CREATE TABLE tasks(
+            id TEXT PRIMARY KEY,
+            userId INTEGER,
+            title TEXT,
+            description TEXT,
+            dueDate TEXT,
+            priority TEXT,
+            isCompleted INTEGER DEFAULT 0
+          )
+        ''');
+      },
       onCreate: (db, version) async {
         // Users Table
         await db.execute('''
@@ -38,7 +68,7 @@ class DBHelper {
         // Tasks Table
         await db.execute('''
           CREATE TABLE tasks(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id TEXT PRIMARY KEY,
             userId INTEGER,
             title TEXT,
             description TEXT,
@@ -114,7 +144,11 @@ class DBHelper {
 
   static Future<int> insertTask(Task task) async {
     final db = await database;
-    return await db.insert('tasks', task.toMap());
+    return await db.insert(
+      'tasks',
+      task.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
   static Future<List<Task>> getTasks(int userId) async {
@@ -140,13 +174,13 @@ class DBHelper {
     );
   }
 
-  static Future<int> deleteTask(int id) async {
+  static Future<int> deleteTask(String id) async {
     final db = await database;
 
     return await db.delete('tasks', where: 'id = ?', whereArgs: [id]);
   }
 
-  static Future<int> toggleTask(int id, int value) async {
+  static Future<int> toggleTask(String id, int value) async {
     final db = await database;
 
     return await db.update(
