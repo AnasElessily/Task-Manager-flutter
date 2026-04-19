@@ -19,9 +19,9 @@ class DBHelper {
 
     return await openDatabase(
       path,
-      version: 2,
+      version: 1,
       onCreate: (db, version) async {
-        // USERS TABLE
+        // Users Table
         await db.execute('''
           CREATE TABLE users(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -35,7 +35,7 @@ class DBHelper {
           )
         ''');
 
-        // TASKS TABLE
+        // Tasks Table
         await db.execute('''
           CREATE TABLE tasks(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -48,36 +48,17 @@ class DBHelper {
           )
         ''');
       },
-      onUpgrade: (db, oldVersion, newVersion) async {
-        if (oldVersion < 2) {
-          final users = await db.query('users', columns: ['id', 'password']);
-
-          for (final user in users) {
-            final id = user['id'] as int?;
-            final password = user['password'] as String?;
-
-            if (id == null || password == null || PasswordHelper.isHashed(password)) {
-              continue;
-            }
-
-            await db.update(
-              'users',
-              {'password': PasswordHelper.hashPassword(password)},
-              where: 'id = ?',
-              whereArgs: [id],
-            );
-          }
-        }
-      },
     );
   }
 
-  // USERS
+  // Users CRUD
 
   static Future<int> insertUser(User user) async {
     final db = await database;
     final userMap = user.toMap();
-    userMap['password'] = PasswordHelper.normalizeForStorage(user.password);
+
+    userMap['password'] = PasswordHelper.hashPassword(user.password);
+
     return await db.insert('users', userMap);
   }
 
@@ -90,16 +71,15 @@ class DBHelper {
       whereArgs: [email],
     );
 
-    // 1. Email doesn't exist
+    // Email not found
     if (result.isEmpty) {
-      return null; // we'll handle message in UI
+      return null;
     }
 
     final user = User.fromMap(result.first);
 
-    // 2. Wrong password case handled separately
     if (!PasswordHelper.verifyPassword(password, user.password)) {
-      throw Exception("wrong_password");
+      throw Exception("Wrong password");
     }
 
     return user;
@@ -119,7 +99,8 @@ class DBHelper {
   static Future<int> updateUser(User user) async {
     final db = await database;
     final userMap = user.toMap();
-    userMap['password'] = PasswordHelper.normalizeForStorage(user.password);
+
+    userMap['password'] = PasswordHelper.hashPassword(user.password);
 
     return await db.update(
       'users',
@@ -129,7 +110,7 @@ class DBHelper {
     );
   }
 
-  // TASKS
+  // Tasks CRUD
 
   static Future<int> insertTask(Task task) async {
     final db = await database;
