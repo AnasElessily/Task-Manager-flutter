@@ -44,4 +44,26 @@ class User {
       profileImage: map['profileImage'],
     );
   }
+
+  User copyWith({
+    int? id,
+    String? fullName,
+    String? email,
+    String? studentId,
+    String? gender,
+    int? level,
+    String? password,
+    String? profileImage,
+  }) {
+    return User(
+      id: id ?? this.id,
+      fullName: fullName ?? this.fullName,
+      email: email ?? this.email,
+      studentId: studentId ?? this.studentId,
+      gender: gender ?? this.gender,
+      level: level ?? this.level,
+      password: password ?? this.password,
+      profileImage: profileImage ?? this.profileImage,
+    );
+  }
 }
