@@ -55,8 +55,10 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
       text: widget.task?.description ?? '',
     );
     _selectedPriority = widget.task?.priority ?? 'Medium';
-    _selectedDate =
-        widget.task != null ? DateTime.tryParse(widget.task!.dueDate) : null;
+    _selectedDate = (widget.task != null
+            ? DateTime.tryParse(widget.task!.dueDate)
+            : null) ??
+        DateTime.now();
   }
 
   @override
@@ -206,7 +208,7 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
                 ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                initialValue: _selectedPriority,
+                value: _selectedPriority,
                 decoration: const InputDecoration(
                   labelText: 'Priority Level',
                   prefixIcon: Icon(Icons.flag_outlined),

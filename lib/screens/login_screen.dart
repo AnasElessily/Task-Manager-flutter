@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../database/db_helper.dart';
 import '../models/user.dart';
 import '../utils/api_service.dart';
-import 'main_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -62,10 +61,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (!mounted) return;
 
-      Navigator.pushAndRemoveUntil(
+      Navigator.pushNamedAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (_) => MainScreen(user: user)),
+        '/home',
         (route) => false,
+        arguments: user,
       );
     } catch (e) {
       if (!mounted) return;

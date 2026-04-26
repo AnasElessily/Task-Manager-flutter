@@ -6,6 +6,7 @@ class Task {
   String dueDate;
   String priority;
   int isCompleted;
+  int isFavorite;
 
   Task({
     this.id,
@@ -15,6 +16,7 @@ class Task {
     required this.dueDate,
     required this.priority,
     this.isCompleted = 0,
+    this.isFavorite = 0,
   });
 
   Map<String, dynamic> toMap() {
@@ -26,6 +28,7 @@ class Task {
       'dueDate': dueDate,
       'priority': priority,
       'isCompleted': isCompleted,
+      'isFavorite': isFavorite,
     };
   }
 
@@ -37,7 +40,37 @@ class Task {
       description: map['description'],
       dueDate: map['dueDate'],
       priority: map['priority'],
-      isCompleted: map['isCompleted'],
+      isCompleted: map['isCompleted'] ?? 0,
+      isFavorite: map['isFavorite'] ?? 0,
     );
   }
+
+  Task copyWith({
+    String? id,
+    int? userId,
+    String? title,
+    String? description,
+    String? dueDate,
+    String? priority,
+    int? isCompleted,
+    int? isFavorite,
+  }) {
+    return Task(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      dueDate: dueDate ?? this.dueDate,
+      priority: priority ?? this.priority,
+      isCompleted: isCompleted ?? this.isCompleted,
+      isFavorite: isFavorite ?? this.isFavorite,
+    );
+  }
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Task && runtimeType == other.runtimeType && id == other.id;
+
+  @override
+  int get hashCode => id.hashCode;
 }

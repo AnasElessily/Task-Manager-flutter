@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import 'providers/task_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/signup_screen.dart';
+import 'screens/main_screen.dart';
+import 'models/user.dart';
 
 void main() {
   runApp(const MyApp());
@@ -69,6 +74,18 @@ class MyApp extends StatelessWidget {
         ),
       ),
       initialRoute: '/login',
+      onGenerateRoute: (settings) {
+        if (settings.name == '/home') {
+          final user = settings.arguments as User;
+          return MaterialPageRoute(
+            builder: (_) => ChangeNotifierProvider(
+              create: (_) => TaskProvider(userId: user.id!)..loadTasks(),
+              child: MainScreen(user: user),
+            ),
+          );
+        }
+        return null;
+      },
       routes: {
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const SignupScreen(),

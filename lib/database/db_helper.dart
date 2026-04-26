@@ -19,39 +19,20 @@ class DBHelper {
 
     return await openDatabase(
       path,
-      version: 3,
+      version: 4,
       onUpgrade: (db, oldVersion, newVersion) async {
-        await db.execute('DROP TABLE IF EXISTS tasks');
-        await db.execute('DROP TABLE IF EXISTS users');
-        // Users Table
-        await db.execute('''
-          CREATE TABLE users(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            fullName TEXT,
-            email TEXT UNIQUE,
-            studentId TEXT,
-            gender TEXT,
-            level INTEGER,
-            password TEXT,
-            profileImage TEXT
-          )
-        ''');
-
-        // Tasks Table
-        await db.execute('''
-          CREATE TABLE tasks(
-            id TEXT PRIMARY KEY,
-            userId INTEGER,
-            title TEXT,
-            description TEXT,
-            dueDate TEXT,
-            priority TEXT,
-            isCompleted INTEGER DEFAULT 0
-          )
-        ''');
+        if (oldVersion < 4) {
+          // Add isFavorite column if upgrading from older version
+          try {
+            await db.execute(
+              'ALTER TABLE tasks ADD COLUMN isFavorite INTEGER DEFAULT 0',
+            );
+          } catch (_) {
+            // Column may already exist if table was recreated
+          }
+        }
       },
       onCreate: (db, version) async {
-        // Users Table
         await db.execute('''
           CREATE TABLE users(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -65,7 +46,6 @@ class DBHelper {
           )
         ''');
 
-        // Tasks Table
         await db.execute('''
           CREATE TABLE tasks(
             id TEXT PRIMARY KEY,
@@ -74,7 +54,8 @@ class DBHelper {
             description TEXT,
             dueDate TEXT,
             priority TEXT,
-            isCompleted INTEGER DEFAULT 0
+            isCompleted INTEGER DEFAULT 0,
+            isFavorite INTEGER DEFAULT 0
           )
         ''');
       },
@@ -101,7 +82,6 @@ class DBHelper {
       whereArgs: [email],
     );
 
-    // Email not found
     if (result.isEmpty) {
       return null;
     }
@@ -186,6 +166,17 @@ class DBHelper {
     return await db.update(
       'tasks',
       {'isCompleted': value},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  static Future<int> toggleFavorite(String id, int value) async {
+    final db = await database;
+
+    return await db.update(
+      'tasks',
+      {'isFavorite': value},
       where: 'id = ?',
       whereArgs: [id],
     );

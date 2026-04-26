@@ -85,6 +85,15 @@ class ApiService {
     return response.statusCode == 200;
   }
 
+  static Future<bool> toggleFavorite(String id, bool isFavorite) async {
+    final response = await http.patch(
+      Uri.parse('$baseUrl/tasks/$id/favorite'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'isFavorite': isFavorite}),
+    );
+    return response.statusCode == 200;
+  }
+
   static Future<String?> uploadProfileImage(int userId, File imageFile) async {
     var request = http.MultipartRequest(
       'POST',

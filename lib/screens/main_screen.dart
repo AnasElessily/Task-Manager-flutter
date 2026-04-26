@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/user.dart';
 import 'task_screen.dart';
+import 'favorites_screen.dart';
+import 'deadline_screen.dart';
 import 'profile_screen.dart';
 
 class MainScreen extends StatefulWidget {
@@ -20,7 +22,12 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
-    _pages = [TaskScreen(user: widget.user), ProfileScreen(user: widget.user)];
+    _pages = [
+      TaskScreen(user: widget.user),
+      const FavoritesScreen(),
+      const DeadlineScreen(),
+      ProfileScreen(user: widget.user),
+    ];
   }
 
   @override
@@ -39,6 +46,16 @@ class _MainScreenState extends State<MainScreen> {
             icon: Icon(Icons.assignment_outlined),
             selectedIcon: Icon(Icons.assignment),
             label: 'Tasks',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.star_border),
+            selectedIcon: Icon(Icons.star),
+            label: 'Favorites',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.alarm_outlined),
+            selectedIcon: Icon(Icons.alarm),
+            label: 'Deadline',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline),

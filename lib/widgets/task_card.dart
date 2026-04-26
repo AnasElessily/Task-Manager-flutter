@@ -8,12 +8,14 @@ class TaskCard extends StatelessWidget {
     required this.onToggle,
     required this.onEdit,
     required this.onDelete,
+    required this.onFavorite,
   });
 
   final Task task;
   final ValueChanged<bool?> onToggle;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final VoidCallback onFavorite;
 
   Color _priorityColor(BuildContext context) {
     switch (task.priority) {
@@ -31,6 +33,7 @@ class TaskCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isCompleted = task.isCompleted == 1;
+    final isFavorite = task.isFavorite == 1;
     final priorityColor = _priorityColor(context);
 
     return Card(
@@ -60,14 +63,31 @@ class TaskCard extends StatelessWidget {
               onChanged: onToggle,
             ),
           ),
-          title: Text(
-            task.title,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: isCompleted ? Colors.grey : Colors.black87,
-              decoration: isCompleted ? TextDecoration.lineThrough : null,
-            ),
+          title: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  task.title,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: isCompleted ? Colors.grey : Colors.black87,
+                    decoration:
+                        isCompleted ? TextDecoration.lineThrough : null,
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: Icon(
+                  isFavorite ? Icons.star : Icons.star_border,
+                  color: isFavorite ? Colors.amber : Colors.grey.shade400,
+                ),
+                onPressed: onFavorite,
+                tooltip: isFavorite ? 'Remove from favorites' : 'Add to favorites',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+            ],
           ),
           subtitle: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
