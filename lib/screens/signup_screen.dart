@@ -116,8 +116,9 @@ class _SignupScreenState extends State<SignupScreen> {
                       prefixIcon: Icon(Icons.person_outline),
                     ),
                     validator: (value) {
-                      if (value == null || value.trim().isEmpty)
+                      if (value == null || value.trim().isEmpty) {
                         return "Full Name is required";
+                      }
                       return null;
                     },
                   ),
@@ -128,11 +129,13 @@ class _SignupScreenState extends State<SignupScreen> {
                     keyboardType: TextInputType.emailAddress,
                     decoration: const InputDecoration(
                       labelText: "University Email",
+                      hintText: "ID@stud.fci-cu.edu.eg",
                       prefixIcon: Icon(Icons.email_outlined),
                     ),
                     validator: (value) {
-                      if (value == null || value.trim().isEmpty)
+                      if (value == null || value.trim().isEmpty) {
                         return "Email is required";
+                      }
                       if (!RegExp(
                         r'^\d+@stud\.fci-cu\.edu\.eg$',
                       ).hasMatch(value.trim())) {
@@ -151,12 +154,14 @@ class _SignupScreenState extends State<SignupScreen> {
                       prefixIcon: Icon(Icons.badge_outlined),
                     ),
                     validator: (value) {
-                      if (value == null || value.trim().isEmpty)
+                      if (value == null || value.trim().isEmpty) {
                         return "Student ID is required";
+                      }
                       final email = emailController.text.trim();
                       final emailId = email.split("@").first;
-                      if (emailId != value.trim())
+                      if (emailId != value.trim()) {
                         return "Student ID must match email ID";
+                      }
                       return null;
                     },
                   ),
@@ -167,7 +172,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       labelText: "Academic Level",
                       prefixIcon: Icon(Icons.school_outlined),
                     ),
-                    value: level,
+                    initialValue: level,
                     items: ["1", "2", "3", "4"]
                         .map(
                           (lvl) => DropdownMenuItem(
@@ -185,29 +190,27 @@ class _SignupScreenState extends State<SignupScreen> {
                       labelText: "Gender",
                       prefixIcon: Icon(Icons.people_outline),
                     ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: RadioListTile<String>(
-                            title: const Text("Male"),
-                            value: "Male",
-                            groupValue: gender,
-                            onChanged: (value) =>
-                                setState(() => gender = value),
-                            contentPadding: EdgeInsets.zero,
+                    child: RadioGroup<String>(
+                      groupValue: gender,
+                      onChanged: (value) => setState(() => gender = value),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: RadioListTile<String>(
+                              title: const Text("Male"),
+                              value: "Male",
+                              contentPadding: EdgeInsets.zero,
+                            ),
                           ),
-                        ),
-                        Expanded(
-                          child: RadioListTile<String>(
-                            title: const Text("Female"),
-                            value: "Female",
-                            groupValue: gender,
-                            onChanged: (value) =>
-                                setState(() => gender = value),
-                            contentPadding: EdgeInsets.zero,
+                          Expanded(
+                            child: RadioListTile<String>(
+                              title: const Text("Female"),
+                              value: "Female",
+                              contentPadding: EdgeInsets.zero,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -229,12 +232,13 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                     ),
                     validator: (value) {
-                      if (value == null || value.isEmpty)
+                      if (value == null || value.isEmpty) {
                         return "Password is required";
-                      if (value.length < 8)
+                      } else if (value.length < 8) {
                         return "Password must be at least 8 characters";
-                      if (!RegExp(r'\d').hasMatch(value))
+                      } else if (!RegExp(r'\d').hasMatch(value)) {
                         return "Password must contain a number";
+                      }
                       return null;
                     },
                   ),
@@ -259,10 +263,11 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                     ),
                     validator: (value) {
-                      if (value == null || value.isEmpty)
+                      if (value == null || value.isEmpty) {
                         return "Confirm Password is required";
-                      if (value != passwordController.text)
+                      } else if (value != passwordController.text) {
                         return "Passwords do not match";
+                      }
                       return null;
                     },
                   ),

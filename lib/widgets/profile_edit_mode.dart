@@ -65,27 +65,27 @@ class ProfileEditMode extends StatelessWidget {
               labelText: 'Gender',
               prefixIcon: Icon(Icons.people_outline),
             ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: RadioListTile<String>(
-                    value: 'Male',
-                    groupValue: gender,
-                    title: const Text('Male'),
-                    contentPadding: EdgeInsets.zero,
-                    onChanged: onGenderChanged,
+            child: RadioGroup<String>(
+              groupValue: gender,
+              onChanged: onGenderChanged,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: RadioListTile<String>(
+                      value: 'Male',
+                      title: const Text('Male'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: RadioListTile<String>(
-                    value: 'Female',
-                    groupValue: gender,
-                    title: const Text('Female'),
-                    contentPadding: EdgeInsets.zero,
-                    onChanged: onGenderChanged,
+                  Expanded(
+                    child: RadioListTile<String>(
+                      value: 'Female',
+                      title: const Text('Female'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -100,8 +100,9 @@ class ProfileEditMode extends StatelessWidget {
               if (value == null || value.trim().isEmpty) {
                 return 'Email is required';
               }
-              if (!RegExp(r'^\d+@stud\.fci-cu\.edu\.eg$')
-                  .hasMatch(value.trim())) {
+              if (!RegExp(
+                r'^\d+@stud\.fci-cu\.edu\.eg$',
+              ).hasMatch(value.trim())) {
                 return 'Invalid FCI email format';
               }
               return null;
@@ -134,9 +135,7 @@ class ProfileEditMode extends StatelessWidget {
               prefixIcon: Icon(Icons.school_outlined),
             ),
             items: const ['1', '2', '3', '4']
-                .map(
-                  (l) => DropdownMenuItem(value: l, child: Text('Level $l')),
-                )
+                .map((l) => DropdownMenuItem(value: l, child: Text('Level $l')))
                 .toList(),
             onChanged: onLevelChanged,
           ),

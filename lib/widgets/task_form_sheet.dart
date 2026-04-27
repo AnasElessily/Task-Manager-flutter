@@ -28,11 +28,8 @@ class TaskFormSheet extends StatefulWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (_) => TaskFormSheet(
-        task: task,
-        userId: userId,
-        onSaved: onSaved,
-      ),
+      builder: (_) =>
+          TaskFormSheet(task: task, userId: userId, onSaved: onSaved),
     );
   }
 
@@ -55,7 +52,8 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
       text: widget.task?.description ?? '',
     );
     _selectedPriority = widget.task?.priority ?? 'Medium';
-    _selectedDate = (widget.task != null
+    _selectedDate =
+        (widget.task != null
             ? DateTime.tryParse(widget.task!.dueDate)
             : null) ??
         DateTime.now();
@@ -115,7 +113,7 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
 
     if (!mounted) return;
 
-    // Capture everything before the pop so we don't use a stale context.
+    // Capture everything before the pop so we don't use a invalid context.
     final messenger = ScaffoldMessenger.of(context);
     final message = widget.task == null
         ? 'Task added successfully'
@@ -154,8 +152,14 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
               TextFormField(
                 controller: _titleController,
                 decoration: const InputDecoration(
-                  labelText: 'Task Title',
-                  prefixIcon: Icon(Icons.title),
+                  label: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.title, size: 20),
+                      SizedBox(width: 8),
+                      Text('Task Title'),
+                    ],
+                  ),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -169,8 +173,14 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
                 controller: _descriptionController,
                 maxLines: 3,
                 decoration: const InputDecoration(
-                  labelText: 'Task Description',
-                  prefixIcon: Icon(Icons.description_outlined),
+                  label: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.description_outlined, size: 20),
+                      SizedBox(width: 8),
+                      Text('Task Description'),
+                    ],
+                  ),
                   alignLabelWithHint: true,
                 ),
               ),
@@ -180,8 +190,14 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
                 borderRadius: BorderRadius.circular(16),
                 child: InputDecorator(
                   decoration: const InputDecoration(
-                    labelText: 'Due Date',
-                    prefixIcon: Icon(Icons.calendar_today_outlined),
+                    label: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.calendar_today_outlined, size: 20),
+                        SizedBox(width: 8),
+                        Text('Due Date'),
+                      ],
+                    ),
                   ),
                   child: Text(
                     _selectedDate == null
@@ -208,15 +224,19 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
                 ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: _selectedPriority,
+                initialValue: _selectedPriority,
                 decoration: const InputDecoration(
-                  labelText: 'Priority Level',
-                  prefixIcon: Icon(Icons.flag_outlined),
+                  label: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.flag_outlined, size: 20),
+                      SizedBox(width: 8),
+                      Text('Priority Level'),
+                    ],
+                  ),
                 ),
                 items: const ['Low', 'Medium', 'High']
-                    .map(
-                      (p) => DropdownMenuItem(value: p, child: Text(p)),
-                    )
+                    .map((p) => DropdownMenuItem(value: p, child: Text(p)))
                     .toList(),
                 onChanged: (value) {
                   if (value != null) setState(() => _selectedPriority = value);

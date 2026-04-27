@@ -22,7 +22,7 @@ class TaskProvider extends ChangeNotifier {
 
   bool get isLoading => _isLoading;
 
-  // ── Load ──────────────────────────────────────────────────────────────────
+  // Load
 
   Future<void> loadTasks() async {
     _isLoading = true;
@@ -62,8 +62,6 @@ class TaskProvider extends ChangeNotifier {
     }
   }
 
-  // ── Add ───────────────────────────────────────────────────────────────────
-
   Future<void> addTask(Task task) async {
     final newTask = task.copyWith(id: task.id ?? const Uuid().v4());
     await DBHelper.insertTask(newTask);
@@ -73,8 +71,6 @@ class TaskProvider extends ChangeNotifier {
     await loadTasks();
   }
 
-  // ── Update ────────────────────────────────────────────────────────────────
-
   Future<void> updateTask(Task task) async {
     await DBHelper.updateTask(task);
     try {
@@ -83,8 +79,6 @@ class TaskProvider extends ChangeNotifier {
     await loadTasks();
   }
 
-  // ── Delete ────────────────────────────────────────────────────────────────
-
   Future<void> deleteTask(Task task) async {
     try {
       await ApiService.deleteTask(task.id!);
@@ -92,8 +86,6 @@ class TaskProvider extends ChangeNotifier {
     await DBHelper.deleteTask(task.id!);
     await loadTasks();
   }
-
-  // ── Toggle Status ─────────────────────────────────────────────────────────
 
   Future<void> toggleStatus(Task task, bool completed) async {
     final value = completed ? 1 : 0;
@@ -111,8 +103,6 @@ class TaskProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
-
-  // ── Toggle Favorite ───────────────────────────────────────────────────────
 
   Future<void> toggleFavorite(Task task) async {
     final newValue = task.isFavorite == 1 ? 0 : 1;

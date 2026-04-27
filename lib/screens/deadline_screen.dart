@@ -38,7 +38,9 @@ class _DeadlineScreenState extends State<DeadlineScreen> {
     return Consumer<TaskProvider>(
       builder: (context, provider, _) {
         final tasks = provider.tasks;
-        final currentTask = tasks.isEmpty ? null : tasks.where((t) => t.id == _selectedTask?.id).firstOrNull;
+        final currentTask = tasks.isEmpty
+            ? null
+            : tasks.where((t) => t.id == _selectedTask?.id).firstOrNull;
 
         return Scaffold(
           appBar: AppBar(title: const Text('Deadline Reminder')),
@@ -47,7 +49,6 @@ class _DeadlineScreenState extends State<DeadlineScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Task Selector ─────────────────────────────────────────
                 Text(
                   'Select a Task',
                   style: TextStyle(
@@ -68,7 +69,7 @@ class _DeadlineScreenState extends State<DeadlineScreen> {
                     isExpanded: true,
                     underline: const SizedBox(),
                     hint: const Text('Choose a task…'),
-                    value: tasks.contains(_selectedTask) ? _selectedTask : null,
+                    value: currentTask,
                     items: tasks.map((task) {
                       return DropdownMenuItem<Task>(
                         value: task,
@@ -82,10 +83,8 @@ class _DeadlineScreenState extends State<DeadlineScreen> {
                   ),
                 ),
 
-
                 const SizedBox(height: 32),
 
-                // ── Deadline Info Card ─────────────────────────────────────
                 if (currentTask != null) _buildDeadlineCard(currentTask),
 
                 if (tasks.isEmpty)
@@ -237,12 +236,8 @@ class _DeadlineScreenState extends State<DeadlineScreen> {
                 ),
                 const SizedBox(width: 10),
                 _chip(
-                  label: task.isCompleted == 1
-                      ? 'Completed'
-                      : 'Pending',
-                  color: task.isCompleted == 1
-                      ? Colors.green
-                      : Colors.orange,
+                  label: task.isCompleted == 1 ? 'Completed' : 'Pending',
+                  color: task.isCompleted == 1 ? Colors.green : Colors.orange,
                 ),
               ],
             ),
@@ -315,8 +310,18 @@ class _DeadlineScreenState extends State<DeadlineScreen> {
 
   String _monthName(int month) {
     const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December',
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
     return months[month - 1];
   }
